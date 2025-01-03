@@ -9,6 +9,7 @@ How the healthcare API and FHIR store was created.
 * setup environment
 ```bash
 # see .env-sample and setup the environment variables
+# collaborators will need to setup their own .env file
 export $(cat .env | xargs)
 
 export GOOGLE_PROJECT=$(gcloud projects list --filter=name=$GOOGLE_PROJECT_NAME --format="value(projectId)")
@@ -87,6 +88,8 @@ curl -X POST \
 
 ```
 
+## Populated data
+![FHIR store](docs/images/graph-view.png)
 
 ## Query the data
 
