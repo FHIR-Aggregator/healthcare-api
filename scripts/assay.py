@@ -1,8 +1,11 @@
+import importlib
 import json
 import urllib
 import uuid
-from datetime import datetime, timezone, timedelta
 import mimetypes
+# Import the R4 classes
+FHIR_CLASSES = importlib.import_module('fhir.resources.R4B')
+
 
 # Add additional mimetypes
 mimetypes.add_type('text/x-r', '.R', strict=True)
@@ -104,9 +107,11 @@ def create_assay_ndjson(document_reference, group, specimen, assay):
 
     with open(assay, 'w') as output_file:
         for _ in assays:
+            klass = FHIR_CLASSES.get_fhir_model_class(_['resourceType'])
+            klass.model_validate(_)
             output_file.write(json.dumps(_) + '\n')
 
-    # TODO - pass output path, don't just re-use assay path
+    # These classes will be validated by the transform.py script
     with open(assay.replace('Assay', 'DocumentReference'), 'w') as output_file:
         for document_reference in document_references:
             output_file.write(json.dumps(document_reference) + '\n')
