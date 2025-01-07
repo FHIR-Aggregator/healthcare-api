@@ -24,7 +24,9 @@ def transform_documentreference(resource):
 
     if "subject" in resource and "reference" in resource["subject"]:
         if "Specimen" in resource["subject"]["reference"]:
-            return None
+            resource["context"] = {"related": [{"reference": resource["subject"]["reference"]}]}
+            resource.pop("subject")
+            # return None
     return resource
 
 
