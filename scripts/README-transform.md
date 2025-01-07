@@ -36,7 +36,6 @@ python scripts/transform.py --input-ndjson $R5_PROJECT/META/Group.ndjson --outpu
 python scripts/transform.py --input-ndjson $R5_PROJECT/META/DocumentReference.ndjson --output-ndjson $R4_PROJECT/META/DocumentReference.ndjson --validate
 python scripts/transform.py --input-ndjson $R5_PROJECT/META/BodyStructure.ndjson --output-ndjson $R4_PROJECT/META/BodyStructure.ndjson --validate
 python scripts/transform.py --input-ndjson $R5_PROJECT/META/Encounter.ndjson --output-ndjson $R4_PROJECT/META/Encounter.ndjson --validate
-python scripts/transform.py --input-ndjson $R5_PROJECT/META/Group.ndjson --output-ndjson $R4_PROJECT/META/Group.ndjson --validate
 python scripts/transform.py --input-ndjson $R5_PROJECT/META/ImagingStudy.ndjson --output-ndjson $R4_PROJECT/META/ImagingStudy.ndjson --validate
 python scripts/transform.py --input-ndjson $R5_PROJECT/META/MedicationAdministration.ndjson --output-ndjson $R4_PROJECT/META/MedicationAdministration.ndjson --validate
 python scripts/transform.py --input-ndjson $R5_PROJECT/META/ResearchStudy.ndjson --output-ndjson $R4_PROJECT/META/ResearchStudy.ndjson --validate
