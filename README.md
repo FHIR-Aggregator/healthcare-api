@@ -33,6 +33,7 @@ gcloud beta healthcare fhir-stores create $GOOGLE_DATASTORE --dataset=$GOOGLE_DA
 
 ## Transform data
 
+
 * R5 to R4
 The Google Healthcare API only supports R4, so we need to transform the data from R5 to R4.
 [R5 support expected first half of 2025](https://groups.google.com/g/gcp-healthcare-discuss/c/DAua7sqmSl8/m/h1-nnpClBwAJ)
@@ -55,6 +56,8 @@ python scripts/transform.py --input-ndjson MY-R5-PROJECT/META/RESOURCE-NAME.ndjs
 * Create `Assay` resources
 See the scripts/README-assay.md for details on how to create `Assay` resources that link 0..* Specimen or Patient resources to DocumentReference resources.
 
+##### Order of operation for transforming data: 
+After setup, start by generating the Assay.ndjson file. Next, transform the entity ndjson files from R5 to R4. For entity files that do not require transformation, simply transfer them directly to the new R4 project folder.
 
 
 ## Import data
@@ -63,10 +66,10 @@ For full documentation, see [here](https://cloud.google.com/healthcare-api/docs/
 
 ```bash
 # upload to the bucket
-scripts/upload.sh MY-R4-PROJECT/META MY-R4-PROJECT
+scripts/upload.sh MY-R4-PROJECT/META TCGA-PROJECT
 
 # note: there maybe an issue with gcloud package. This may be a workaround:
-CLOUDSDK_PYTHON=python3.10 scripts/upload.sh MY-R4-PROJECT/META TCGA-KIRC
+CLOUDSDK_PYTHON=python3.10 scripts/upload.sh MY-R4-PROJECT/META TCGA-PROJECT
 ```
 
 
@@ -82,7 +85,7 @@ curl -X POST \
     --data '{
       "contentStructure": "RESOURCE",
       "gcsSource": {
-        "uri": "gs://fhir-aggregator-public/MY-R4-PROJECT/META/*.ndjson"        
+        "uri": "gs://fhir-aggregator-public/TCGA-PROJECT/META/*.ndjson"        
       }
     }' "https://healthcare.googleapis.com/v1beta1/projects/$GOOGLE_PROJECT/locations/$GOOGLE_LOCATION/datasets/$GOOGLE_DATASET/fhirStores/$GOOGLE_DATASTORE:import"
 
@@ -99,3 +102,4 @@ curl \
     -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
     $FHIR_BASE'/fhir/Patient?_total=accurate&_count=0'
 ```
+[Advanced FHIR search features](https://cloud.google.com/healthcare-api/docs/how-tos/fhir-advanced-search)
