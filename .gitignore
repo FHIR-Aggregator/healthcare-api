@@ -165,3 +165,5 @@ attic/
 TCGA*/
 .env
 .DS_Store
+INPUT/
+OUTPUT/
