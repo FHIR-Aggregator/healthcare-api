@@ -1,5 +1,4 @@
 import importlib
-
 import click
 import json
 from pydantic import ValidationError
@@ -9,19 +8,20 @@ FHIR_CLASSES = importlib.import_module('fhir.resources.R4B')
 
 
 def transform_documentreference(resource):
-    # Transformation logic for DocumentReference (R5 to R4)
+    """
+    Transform a DocumentReference resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The DocumentReference resource to transform.
+
+    Returns:
+    dict: The transformed DocumentReference resource.
+    """
     del resource["version"]
     if "content" in resource:
         for content in resource["content"]:
             if "profile" in content:
                 content["format"] = content.pop("profile")[0]["valueCoding"]
-    # if "custodian" in resource:
-    #     resource["custodianOrganization"] = resource.pop("custodian")
-
-    #
-    # TODO - remove when data is cleaned up
-    #
-
     if "subject" in resource and "reference" in resource["subject"]:
         if "Specimen" in resource["subject"]["reference"]:
             return None
@@ -29,14 +29,30 @@ def transform_documentreference(resource):
 
 
 def transform_bodystructure(resource):
-    # Transformation logic for BodyStructure (R5 to R4)
+    """
+    Transform a BodyStructure resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The BodyStructure resource to transform.
+
+    Returns:
+    dict: The transformed BodyStructure resource.
+    """
     if "includedStructure" in resource:
         resource["location"] = resource.pop("includedStructure")[0]["structure"]
     return resource
 
 
 def transform_encounter(resource):
-    # Transformation logic for Encounter (R5 to R4)
+    """
+    Transform an Encounter resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The Encounter resource to transform.
+
+    Returns:
+    dict: The transformed Encounter resource.
+    """
     if "reason" in resource:
         resource["reasonReference"] = [ref["reference"] for ref in resource.pop("reference", [])]
     if "class" in resource:
@@ -48,16 +64,31 @@ def transform_encounter(resource):
 
 
 def transform_group(resource):
-    # Transformation logic for Group (R5 to R4)
+    """
+    Transform a Group resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The Group resource to transform.
+
+    Returns:
+    dict: The transformed Group resource.
+    """
     del resource["membership"]
     resource["actual"] = True
-    # Group.type: code type mismatch: "specimen" is not a GroupTypeCode"
     resource["type"] = "person"
     return resource
 
 
 def transform_imagingstudy(resource):
-    # Transformation logic for ImagingStudy (R5 to R4)
+    """
+    Transform an ImagingStudy resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The ImagingStudy resource to transform.
+
+    Returns:
+    dict: The transformed ImagingStudy resource.
+    """
     if "basedOn" in resource:
         resource["procedureReference"] = resource.pop("basedOn")
     if "series" in resource:
@@ -69,7 +100,15 @@ def transform_imagingstudy(resource):
 
 
 def transform_medicationadministration(resource):
-    # Transformation logic for MedicationAdministration (R5 to R4)
+    """
+    Transform a MedicationAdministration resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The MedicationAdministration resource to transform.
+
+    Returns:
+    dict: The transformed MedicationAdministration resource.
+    """
     if "medication" in resource:
         _medication = resource.pop("medication")
         if "concept" in _medication:
@@ -85,21 +124,45 @@ def transform_medicationadministration(resource):
 
 
 def transform_researchstudy(resource):
-    # Transformation logic for ResearchStudy (R5 to R4)
+    """
+    Transform a ResearchStudy resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The ResearchStudy resource to transform.
+
+    Returns:
+    dict: The transformed ResearchStudy resource.
+    """
     if "name" in resource:
         resource.pop("name")
     return resource
 
 
 def transform_researchsubject(resource):
-    # Transformation logic for ResearchSubject (R5 to R4)
+    """
+    Transform a ResearchSubject resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The ResearchSubject resource to transform.
+
+    Returns:
+    dict: The transformed ResearchSubject resource.
+    """
     resource["individual"] = resource.pop("subject")
     resource["status"] = "on-study"
     return resource
 
 
 def transform_specimen(resource):
-    # Transformation logic for Specimen (R5 to R4)
+    """
+    Transform a Specimen resource from R5 to R4.
+
+    Parameters:
+    resource (dict): The Specimen resource to transform.
+
+    Returns:
+    dict: The transformed Specimen resource.
+    """
     if "processing" in resource:
         for process in resource["processing"]:
             process["procedure"] = process.pop("method")
@@ -109,7 +172,16 @@ def transform_specimen(resource):
     return resource
 
 
-def dispatch_transformation(resource: dict) -> dict|None:
+def dispatch_transformation(resource: dict, *args, **kwargs) -> dict | None:
+    """
+    Dispatch the transformation of a resource based on its resourceType.
+
+    Parameters:
+    resource (dict): The resource to transform.
+
+    Returns:
+    dict | None: The transformed resource or None if the resource should be skipped.
+    """
     transformers = {
         "DocumentReference": transform_documentreference,
         "BodyStructure": transform_bodystructure,
@@ -126,10 +198,19 @@ def dispatch_transformation(resource: dict) -> dict|None:
     if resource_type in transformers:
         return transformers[resource_type](resource)
     else:
-        raise ValueError(f"Unsupported resourceType: {resource_type}")
+        return resource
 
 
 def validate_r4_resource(resource):
+    """
+    Validate an R4 resource using the FHIR model classes.
+
+    Parameters:
+    resource (dict): The resource to validate.
+
+    Returns:
+    bool: True if the resource is valid, False otherwise.
+    """
     try:
         klass = FHIR_CLASSES.get_fhir_model_class(resource['resourceType'])
         _ = klass.model_validate(resource)
@@ -139,7 +220,6 @@ def validate_r4_resource(resource):
             # Ignore the error about attachment.size, R4 has it as an unsignedInt, R5 has it as an integer64
             if '.'.join([str(_) for _ in error['loc']]) == 'content.0.attachment.size':
                 return True
-        # raise e
         click.echo(f"Validation error: {klass} {e}\n{json.dumps(resource, indent=2)}")
         return False
 
@@ -150,7 +230,15 @@ def validate_r4_resource(resource):
 @click.option('--validate', is_flag=True, default=True, help='Validate transformed resources for R4 compliance')
 @click.option('--stop-on-first-error', is_flag=True, default=False, help='Stop processing on the first error')
 def process_ndjson(input_ndjson, output_ndjson, validate, stop_on_first_error):
-    """Process an NDJSON file to transform R5 resources to R4 equivalents."""
+    """
+    Process an NDJSON file to transform R5 resources to R4 equivalents.
+
+    Parameters:
+    input_ndjson (str): Path to the input NDJSON file.
+    output_ndjson (str): Path to the output NDJSON file.
+    validate (bool): Flag to validate transformed resources for R4 compliance.
+    stop_on_first_error (bool): Flag to stop processing on the first error.
+    """
     with open(input_ndjson, 'r') as infile, open(output_ndjson, 'w') as outfile:
         for line in infile:
             resource = json.loads(line.strip())
@@ -171,4 +259,3 @@ def process_ndjson(input_ndjson, output_ndjson, validate, stop_on_first_error):
 
 if __name__ == "__main__":
     process_ndjson()
-
